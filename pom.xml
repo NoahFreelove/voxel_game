@@ -139,18 +139,37 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
-                <configuration>
-                    <!-- For exec:java (non-macOS) -->
-                    <mainClass>org.lab.Main</mainClass>
-                    <!-- For exec:exec (macOS with -XstartOnFirstThread) -->
-                    <executable>java</executable>
-                    <arguments>
-                        <argument>-XstartOnFirstThread</argument>
-                        <argument>-classpath</argument>
-                        <classpath/>
-                        <argument>org.lab.Main</argument>
-                    </arguments>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>org.lab.Main</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- For macOS: ./mvnw compile exec:exec@macos -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>macos</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>java</executable>
+                            <arguments>
+                                <argument>-XstartOnFirstThread</argument>
+                                <argument>-classpath</argument>
+                                <classpath/>
+                                <argument>org.lab.Main</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

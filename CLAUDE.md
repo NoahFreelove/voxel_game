@@ -13,7 +13,7 @@ Educational voxel game for teaching OpenGL and 3D graphics concepts. Minecraft a
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| Java | 25 | Language |
+| Java | 21 | Language |
 | LWJGL | 3.3.6 | OpenGL/GLFW bindings |
 | JOML | 1.10.8 | Matrix/vector math |
 | Maven | - | Build system |
@@ -78,9 +78,9 @@ src/main/resources/
 ```
 
 ### macOS requirement
-GLFW requires the main thread on macOS. Add this JVM argument:
+GLFW requires the main thread on macOS. Use `exec:exec@macos` instead:
 ```bash
-./mvnw compile exec:java -Dexec.vmArgs="-XstartOnFirstThread"
+./mvnw compile exec:exec@macos
 ```
 
 ### From IDE
