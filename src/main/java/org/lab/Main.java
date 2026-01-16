@@ -55,6 +55,11 @@ public class Main {
     private RaycastResult targetedBlock = null;
     private static final float REACH_DISTANCE = 5.0f;
 
+    // FPS tracking and frame limiting
+    private int frameCount = 0;
+    private float fpsTimer = 0;
+    private static final float TARGET_FRAME_TIME = 1.0f / 30.0f;  // 30 FPS
+
     public static void main(String[] args) {
         new Main().run();
     }
@@ -82,6 +87,7 @@ public class Main {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE); // Required on macOS
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_SAMPLES, 0);  // No multisampling/AA
 
         // Create window
         window = glfwCreateWindow(WIDTH, HEIGHT, TITLE, NULL, NULL);
@@ -150,7 +156,7 @@ public class Main {
 
         // Make OpenGL context current
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1); // V-Sync
+        glfwSwapInterval(0); // Disable V-Sync, we'll limit manually
 
         // Initialize OpenGL
         GL.createCapabilities();
@@ -202,29 +208,16 @@ public class Main {
 
     /**
      * Creates test blocks in the world.
+     * Simplified to single layer for performance on lab machines.
      */
     private void createTestBlocks() {
-        // Create a 10x10 floor of grass blocks at y=0
+        // Single layer floor at y=0
         for (int x = -5; x < 5; x++) {
             for (int z = -5; z < 5; z++) {
-                world.addBlock(new Block(x, 0, z, 0)); // All use single grass texture
+                world.addBlock(new Block(x, 0, z, 0));
             }
         }
-
-        // Add some blocks underneath for depth
-        for (int x = -5; x < 5; x++) {
-            for (int z = -5; z < 5; z++) {
-                world.addBlock(new Block(x, -1, z, 0));
-            }
-        }
-
-        for (int x = -5; x < 5; x++) {
-            for (int z = -5; z < 5; z++) {
-                world.addBlock(new Block(x, -2, z, 0));
-            }
-        }
-
-        // Add a small tower to test vertical collision
+        // Tower for testing
         for (int y = 1; y <= 5; y++) {
             world.addBlock(new Block(3, y, 3, 0));
         }
@@ -234,15 +227,37 @@ public class Main {
         float lastTime = (float) glfwGetTime();
 
         while (!glfwWindowShouldClose(window)) {
+            // Poll events first to ensure fresh input for raycast
+            glfwPollEvents();
+
             float currentTime = (float) glfwGetTime();
             float deltaTime = currentTime - lastTime;
+
+            // 30 FPS limit - skip frame if too fast
+            if (deltaTime < TARGET_FRAME_TIME) {
+                continue;
+            }
             lastTime = currentTime;
+
+            // FPS counter
+            frameCount++;
+            fpsTimer += deltaTime;
+            if (fpsTimer >= 1.0f) {
+                glfwSetWindowTitle(window, TITLE + " - FPS: " + frameCount);
+                frameCount = 0;
+                fpsTimer = 0;
+            }
 
             // Process input
             processInput(deltaTime);
 
             // Update player physics
             player.update(deltaTime, world);
+
+            // Reset player if fallen 20 blocks
+            if (player.getPosition().y < -20) {
+                player.reset(0, 1, 0);
+            }
 
             // Update camera position from player eye position
             cameraPos = player.getEyePosition();
@@ -268,16 +283,13 @@ public class Main {
             shader.setInt("uTexture", 0);
             shader.setFloat("uAtlasTileSize", 1.0f);  // Full texture = 1.0
             shader.setInt("uAtlasTilesPerRow", 1);     // Single texture
-            shader.setVector3f("uLightDir", 0.3f, -0.8f, 0.5f); // Sun direction
-            shader.setVector3f("uAmbientColor", 0.3f, 0.3f, 0.35f); // Slight blue ambient
 
             // Batch and render all blocks with optional highlight
             Vector3i highlightPos = targetedBlock != null ? targetedBlock.getBlockPos() : null;
             blockRenderer.render(world.getBlocks(), shader, viewProjection, highlightPos);
 
-            // Swap buffers and poll events
+            // Swap buffers
             glfwSwapBuffers(window);
-            glfwPollEvents();
         }
     }
 

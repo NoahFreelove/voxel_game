@@ -205,4 +205,13 @@ public class Player {
     public boolean isOnGround() {
         return onGround;
     }
+
+    /**
+     * Resets the player to a given position with zero velocity.
+     */
+    public void reset(float x, float y, float z) {
+        position.set(x, y, z);
+        velocity.set(0, 0, 0);
+        onGround = false;
+    }
 }
