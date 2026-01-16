@@ -5,21 +5,16 @@ in vec3 vNormal;
 in float vTexIndex;
 in float vHighlight;
 
-uniform sampler2D uTexture;
-uniform float uAtlasTileSize;
-uniform int uAtlasTilesPerRow;
+// Texture array: all block textures in one array, selected by layer index
+// This is the proper OpenGL approach - no branching, single bind, scalable
+uniform sampler2DArray uTextureArray;
 
 out vec4 FragColor;
 
 void main() {
-    // Atlas UV calculation
-    int tileX = int(vTexIndex) % uAtlasTilesPerRow;
-    int tileY = int(vTexIndex) / uAtlasTilesPerRow;
-    vec2 tileOffset = vec2(float(tileX) * uAtlasTileSize,
-                           1.0 - (float(tileY) + 1.0) * uAtlasTileSize);
-    vec2 atlasUV = tileOffset + vTexCoord * uAtlasTileSize;
-
-    vec4 texColor = texture(uTexture, atlasUV);
+    // Sample from texture array using (u, v, layer) coordinates
+    // The layer index selects which texture in the array to use
+    vec4 texColor = texture(uTextureArray, vec3(vTexCoord, vTexIndex));
 
     // Simple face-based shading (no normalize, no dot product)
     float shade = 0.7 + abs(vNormal.y) * 0.3;
